@@ -1,0 +1,470 @@
+Show that a window size Ws < 2^m  , where m is the number of bits being used to number the frames in a modulo m circular numbering fasion .
+Thus the sequence number of frames uses m bits 
+
+Output of Go-back-N without timer and without channel modelling :
+
+yes data
+Srecent = Slast
+sent Slast
+yes data
+Acksn =  0
+Slast updated : 1
+sent Srecent 1
+yes data
+Acksn =  1
+Slast updated : 2
+sent Srecent 2
+yes data
+Acksn =  2
+Slast updated : 3
+sent Srecent 3
+yes data
+Acksn =  3
+Slast updated : 4
+sent Srecent 4
+yes data
+Acksn =  4
+Slast updated : 5
+sent Srecent 5
+yes data
+Acksn =  5
+Slast updated : 6
+sent Srecent 6
+yes data
+Acksn =  6
+Slast updated : 7
+sent Srecent 7
+yes data
+Acksn =  7
+Slast updated : 0
+sent Srecent 0
+yes data
+Acksn =  8
+Slast updated : 1
+sent Srecent 1
+yes data
+Acksn =  9
+Slast updated : 2
+sent Srecent 2
+
+
+On server side the output :
+
+
+The server is ready to receive haha
+starting
+inside while Rnext < 50 :
+'000 1'
+dat 0
+Updating Rnext :
+Rnext : 1
+inside while Rnext < 50 :
+'001 1'
+dat 1
+Updating Rnext :
+Rnext : 2
+inside while Rnext < 50 :
+'010 1'
+dat 2
+Updating Rnext :
+Rnext : 3
+inside while Rnext < 50 :
+'011 1'
+dat 3
+Updating Rnext :
+Rnext : 4
+inside while Rnext < 50 :
+'100 1'
+dat 4
+Updating Rnext :
+Rnext : 5
+inside while Rnext < 50 :
+'101 1'
+dat 5
+Updating Rnext :
+Rnext : 6
+inside while Rnext < 50 :
+'110 1'
+dat 6
+Updating Rnext :
+Rnext : 7
+inside while Rnext < 50 :
+'111 1'
+dat 7
+Updating Rnext :
+Rnext : 0
+inside while Rnext < 50 :
+'000 1'
+dat 0
+Updating Rnext :
+Rnext : 1
+inside while Rnext < 50 :
+'001 1'
+dat 1
+Updating Rnext :
+Rnext : 2
+inside while Rnext < 50 :
+'010 1'
+dat 2
+Updating Rnext :
+Rnext : 3
+inside while Rnext < 50 :
+'011 1'
+dat 3
+Updating Rnext :
+Rnext : 4
+inside while Rnext < 50 :
+'100 1'
+dat 4
+Updating Rnext :
+Rnext : 5
+inside while Rnext < 50 :
+'101 1'
+dat 5
+Updating Rnext :
+Rnext : 6
+inside while Rnext < 50 :
+'110 1'
+dat 6
+Updating Rnext :
+Rnext : 7
+inside while Rnext < 50 :
+'111 1'
+dat 7
+Updating Rnext :
+Rnext : 0
+inside while Rnext < 50 :
+'000 1'
+dat 0
+Updating Rnext :
+Rnext : 1
+inside while Rnext < 50 :
+'001 1'
+dat 1
+Updating Rnext :
+Rnext : 2
+inside while Rnext < 50 :
+'010 1'
+dat 2
+Updating Rnext :
+Rnext : 3
+inside while Rnext < 50 :
+'011 1'
+dat 3
+Updating Rnext :
+Rnext : 4
+inside while Rnext < 50 :
+'100 1'
+dat 4
+Updating Rnext :
+Rnext : 5
+inside while Rnext < 50 :
+'101 1'
+dat 5
+Updating Rnext :
+Rnext : 6
+inside while Rnext < 50 :
+'110 1'
+dat 6
+Updating Rnext :
+Rnext : 7
+inside while Rnext < 50 :
+'111 1'
+dat 7
+Updating Rnext :
+Rnext : 0
+inside while Rnext < 50 :
+'000 1'
+dat 0
+Updating Rnext :
+Rnext : 1
+inside while Rnext < 50 :
+'001 1'
+dat 1
+Updating Rnext :
+Rnext : 2
+inside while Rnext < 50 :
+'010 1'
+dat 2
+Updating Rnext :
+Rnext : 3
+inside while Rnext < 50 :
+'011 1'
+dat 3
+Updating Rnext :
+Rnext : 4
+inside while Rnext < 50 :
+'100 1'
+dat 4
+Updating Rnext :
+Rnext : 5
+inside while Rnext < 50 :
+'101 1'
+dat 5
+Updating Rnext :
+Rnext : 6
+inside while Rnext < 50 :
+'110 1'
+dat 6
+Updating Rnext :
+Rnext : 7
+inside while Rnext < 50 :
+'111 1'
+dat 7
+Updating Rnext :
+Rnext : 0
+inside while Rnext < 50 :
+'000 1'
+dat 0
+Updating Rnext :
+Rnext : 1
+inside while Rnext < 50 :
+'001 1'
+dat 1
+Updating Rnext :
+Rnext : 2
+inside while Rnext < 50 :
+'010 1'
+dat 2
+Updating Rnext :
+Rnext : 3
+inside while Rnext < 50 :
+'011 1'
+dat 3
+Updating Rnext :
+Rnext : 4
+inside while Rnext < 50 :
+'100 1'
+dat 4
+Updating Rnext :
+Rnext : 5
+inside while Rnext < 50 :
+'101 1'
+dat 5
+Updating Rnext :
+Rnext : 6
+inside while Rnext < 50 :
+'110 1'
+dat 6
+Updating Rnext :
+Rnext : 7
+inside while Rnext < 50 :
+'111 1'
+dat 7
+Updating Rnext :
+Rnext : 0
+inside while Rnext < 50 :
+'000 1'
+dat 0
+Updating Rnext :
+Rnext : 1
+inside while Rnext < 50 :
+'001 1'
+dat 1
+Updating Rnext :
+Rnext : 2
+inside while Rnext < 50 :
+'010 1'
+dat 2
+Updating Rnext :
+Rnext : 3
+inside while Rnext < 50 :
+'011 1'
+dat 3
+Updating Rnext :
+Rnext : 4
+inside while Rnext < 50 :
+'100 1'
+dat 4
+Updating Rnext :
+Rnext : 5
+inside while Rnext < 50 :
+'101 1'
+dat 5
+Updating Rnext :
+Rnext : 6
+inside while Rnext < 50 :
+'110 1'
+dat 6
+Updating Rnext :
+Rnext : 7
+inside while Rnext < 50 :
+'111 1'
+dat 7
+Updating Rnext :
+Rnext : 0
+inside while Rnext < 50 :
+'000 1'
+dat 0
+Updating Rnext :
+Rnext : 1
+inside while Rnext < 50 :
+'001 1'
+dat 1
+Updating Rnext :
+Rnext : 2
+starting
+
+
+
+yes data
+Acksn =  10
+Slast updated : 3
+sent Srecent 3
+yes data
+Acksn =  11
+Slast updated : 4
+sent Srecent 4
+yes data
+Acksn =  12
+Slast updated : 5
+sent Srecent 5
+yes data
+Acksn =  13
+Slast updated : 6
+sent Srecent 6
+yes data
+Acksn =  14
+Slast updated : 7
+sent Srecent 7
+yes data
+Acksn =  15
+Slast updated : 0
+sent Srecent 0
+yes data
+Acksn =  16
+Slast updated : 1
+sent Srecent 1
+yes data
+Acksn =  17
+Slast updated : 2
+sent Srecent 2
+yes data
+Acksn =  18
+Slast updated : 3
+sent Srecent 3
+yes data
+Acksn =  19
+Slast updated : 4
+sent Srecent 4
+yes data
+Acksn =  20
+Slast updated : 5
+sent Srecent 5
+yes data
+Acksn =  21
+Slast updated : 6
+sent Srecent 6
+yes data
+Acksn =  22
+Slast updated : 7
+sent Srecent 7
+yes data
+Acksn =  23
+Slast updated : 0
+sent Srecent 0
+yes data
+Acksn =  24
+Slast updated : 1
+sent Srecent 1
+yes data
+Acksn =  25
+Slast updated : 2
+sent Srecent 2
+yes data
+Acksn =  26
+Slast updated : 3
+sent Srecent 3
+yes data
+Acksn =  27
+Slast updated : 4
+sent Srecent 4
+yes data
+Acksn =  28
+Slast updated : 5
+sent Srecent 5
+yes data
+Acksn =  29
+Slast updated : 6
+sent Srecent 6
+yes data
+Acksn =  30
+Slast updated : 7
+sent Srecent 7
+yes data
+Acksn =  31
+Slast updated : 0
+sent Srecent 0
+yes data
+Acksn =  32
+Slast updated : 1
+sent Srecent 1
+yes data
+Acksn =  33
+Slast updated : 2
+sent Srecent 2
+yes data
+Acksn =  34
+Slast updated : 3
+sent Srecent 3
+yes data
+Acksn =  35
+Slast updated : 4
+sent Srecent 4
+yes data
+Acksn =  36
+Slast updated : 5
+sent Srecent 5
+yes data
+Acksn =  37
+Slast updated : 6
+sent Srecent 6
+yes data
+Acksn =  38
+Slast updated : 7
+sent Srecent 7
+yes data
+Acksn =  39
+Slast updated : 0
+sent Srecent 0
+yes data
+Acksn =  40
+Slast updated : 1
+sent Srecent 1
+yes data
+Acksn =  41
+Slast updated : 2
+sent Srecent 2
+yes data
+Acksn =  42
+Slast updated : 3
+sent Srecent 3
+yes data
+Acksn =  43
+Slast updated : 4
+sent Srecent 4
+yes data
+Acksn =  44
+Slast updated : 5
+sent Srecent 5
+yes data
+Acksn =  45
+Slast updated : 6
+sent Srecent 6
+yes data
+Acksn =  46
+Slast updated : 7
+sent Srecent 7
+yes data
+Acksn =  47
+Slast updated : 0
+sent Srecent 0
+yes data
+Acksn =  48
+Slast updated : 1
+sent Srecent 1
+yes data
+Acksn =  49
+Slast updated : 2
+sent Srecent 2
+

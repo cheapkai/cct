@@ -1,0 +1,225 @@
+cuda_SVD.cpp(57): error: expected a declaration
+
+cuda_SVD.cpp(77): error: expected a declaration
+
+cuda_SVD.cpp(98): warning: parsing restarts here after previous syntax error
+
+cuda_SVD.cpp(104): error: expected a declaration
+
+cuda_SVD.cpp(111): warning: parsing restarts here after previous syntax error
+
+cuda_SVD.cpp(112): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(112): error: variable "RMS_new" has already been defined
+
+cuda_SVD.cpp(113): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(113): error: expected a ";"
+
+cuda_SVD.cpp(114): error: expected a declaration
+
+cuda_SVD.cpp(116): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(116): error: variable "cout" has already been defined
+
+cuda_SVD.cpp(116): error: expected a ";"
+
+cuda_SVD.cpp(119): error: expected a declaration
+
+cuda_SVD.cpp(125): warning: parsing restarts here after previous syntax error
+
+cuda_SVD.cpp(126): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(126): error: declaration is incompatible with overloaded function "writeCSV"
+cuda_SVD.h(93): here
+
+cuda_SVD.cpp(126): error: no suitable conversion function from "Eigen::MatrixXf" to "int" exists
+
+cuda_SVD.cpp(126): error: expected a ")"
+
+cuda_SVD.cpp(127): error: expected a declaration
+
+cuda_SVD.cpp(156): warning: parsing restarts here after previous syntax error
+
+cuda_SVD.cpp(158): error: identifier "batch_size" is undefined
+
+cuda_SVD.cpp(160): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(160): error: declaration is incompatible with overloaded function "cudaMalloc"
+/usr/local/cuda-8.0/bin/../targets/x86_64-linux/include/cuda_runtime_api.h(3056): here
+
+cuda_SVD.cpp(160): error: a value of type "void **" cannot be used to initialize an entity of type "int"
+
+cuda_SVD.cpp(160): error: expected a ")"
+
+cuda_SVD.cpp(162): error: expected a declaration
+
+cuda_SVD.cpp(188): warning: parsing restarts here after previous syntax error
+
+cuda_SVD.cpp(189): error: expected a declaration
+
+cuda_SVD.cpp(193): warning: parsing restarts here after previous syntax error
+
+cuda_SVD.cpp(194): error: expected a declaration
+
+cuda_SVD.cpp(195): error: expected a declaration
+
+cuda_SVD.cpp(198): error: expected a declaration
+
+cuda_SVD.cpp(199): error: expected a declaration
+
+cuda_SVD.cpp(201): error: variable "RMS" has already been defined
+
+cuda_SVD.cpp(203): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(203): error: declaration is incompatible with "void cudaCallMultiplyKernel(unsigned int, unsigned int, float *, float *, float *, int, int, int)"
+cuda_SVD.cuh(14): here
+
+cuda_SVD.cpp(203): error: identifier "blocks" is undefined
+
+cuda_SVD.cpp(203): error: expected a ")"
+
+cuda_SVD.cpp(210): warning: parsing restarts here after previous syntax error
+
+cuda_SVD.cpp(212): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(212): error: variable "RMS" has already been defined
+
+cuda_SVD.cpp(213): error: identifier "threadsPerBlock" is undefined
+
+cuda_SVD.cpp(214): error: identifier "dev_R0" is undefined
+
+cuda_SVD.cpp(216): error: identifier "num_users" is undefined
+
+cuda_SVD.cpp(217): error: identifier "num_items" is undefined
+
+cuda_SVD.cpp(218): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(218): error: variable "cout" has already been defined
+
+cuda_SVD.cpp(218): error: expected a ";"
+
+cuda_SVD.cpp(219): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(219): error: variable "RMS" has already been defined
+
+cuda_SVD.cpp(219): error: expected a ";"
+
+cuda_SVD.cpp(220): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(220): error: variable "RMS" has already been defined
+
+cuda_SVD.cpp(221): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(221): error: variable "cout" has already been defined
+
+cuda_SVD.cpp(221): error: expected a ";"
+
+cuda_SVD.cpp(224): error: expected a declaration
+
+cuda_SVD.cpp(225): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(225): error: declaration is incompatible with "int printf(const char *, ...)"
+/usr/local/cuda-8.0/bin/../targets/x86_64-linux/include/common_functions.h(129): here
+
+cuda_SVD.cpp(225): error: a value of type "const char *" cannot be used to initialize an entity of type "int"
+
+cuda_SVD.cpp(226): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(226): error: variable "writeCSV" has already been defined
+
+cuda_SVD.cpp(226): error: a value of type "float *" cannot be used to initialize an entity of type "int"
+
+cuda_SVD.cpp(226): error: expected a ")"
+
+cuda_SVD.cpp(228): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(228): error: declaration is incompatible with "void free(void *)"
+/usr/local/cuda-8.0/bin/../targets/x86_64-linux/include/common_functions.h(139): here
+
+cuda_SVD.cpp(228): error: identifier "host_P" is undefined
+
+cuda_SVD.cpp(229): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(229): error: variable "free" has already been defined
+
+cuda_SVD.cpp(229): error: identifier "host_Q" is undefined
+
+cuda_SVD.cpp(230): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(230): error: variable "free" has already been defined
+
+cuda_SVD.cpp(230): error: identifier "host_R" is undefined
+
+cuda_SVD.cpp(232): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(232): error: declaration is incompatible with "cudaError_t cudaFree(void *)"
+/usr/local/cuda-8.0/bin/../targets/x86_64-linux/include/cuda_runtime_api.h(3193): here
+
+cuda_SVD.cpp(232): error: identifier "dev_P" is undefined
+
+cuda_SVD.cpp(233): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(233): error: variable "cudaFree" has already been defined
+
+cuda_SVD.cpp(233): error: identifier "dev_Q" is undefined
+
+cuda_SVD.cpp(234): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(234): error: variable "cudaFree" has already been defined
+
+cuda_SVD.cpp(235): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(235): error: variable "cudaFree" has already been defined
+
+cuda_SVD.cpp(235): error: a value of type "float *" cannot be used to initialize an entity of type "int"
+
+cuda_SVD.cpp(236): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(236): error: variable "free" has already been defined
+
+cuda_SVD.cpp(236): error: a value of type "float *" cannot be used to initialize an entity of type "int"
+
+cuda_SVD.cpp(237): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(237): error: variable "free" has already been defined
+
+cuda_SVD.cpp(237): error: a value of type "int *" cannot be used to initialize an entity of type "int"
+
+cuda_SVD.cpp(238): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(238): error: variable "cudaFree" has already been defined
+
+cuda_SVD.cpp(238): error: a value of type "int *" cannot be used to initialize an entity of type "int"
+
+cuda_SVD.cpp(240): error: expected a declaration
+
+cuda_SVD.cpp(267): warning: parsing restarts here after previous syntax error
+
+cuda_SVD.cpp(268): error: identifier "argv" is undefined
+
+cuda_SVD.cpp(271): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(271): error: variable "buffer1" has already been defined
+
+cuda_SVD.cpp(271): error: expected a ";"
+
+cuda_SVD.cpp(272): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(272): error: variable "buffer2" has already been defined
+
+cuda_SVD.cpp(272): error: expected a ";"
+
+cuda_SVD.cpp(275): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(276): error: this declaration has no storage class or type specifier
+
+cuda_SVD.cpp(276): error: declaration is incompatible with "void decompose_CPU(std::stringstream &, int, int, int, int, float, float)"
+(20): here
+
+cuda_SVD.cpp(276): error: no suitable conversion function from "std::stringstream" to "int" exists
+
+Error limit reached.
+100 errors detected in the compilation of "/tmp/tmpxft_0000367e_00000000-9_cuda_SVD.cpp1.ii".
+Compilation terminated.
+

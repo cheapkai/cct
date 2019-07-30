@@ -1,0 +1,13 @@
+cap = str(datetime.now().time())
+				caps = cap.split(':')
+
+				hr = int(caps[0])*60*60
+
+				mi = int(caps[1])*60
+
+				sec = int(caps[2])
+
+				tim = hr + mi + sec
+
+				avl[Tlast] = tim
+

@@ -1,0 +1,203 @@
+Q1)
+
+dynamic - ass2q11.c with and without chunk
+static - ass2q12.c
+guided - ass2q13.c
+
+1. run times
+ dyn :  0.208 seconds    
+stat : o.186 seconds
+guided - 0.189 s
+
+fastest : static
+
+2. run time is 0.1939 sec
+
+ass2q14.c - code with different run times for different loops
+guided :
+time taken - 24 seconds 2 mins
+
+static : 34 seconds
+
+dynamic : 30 seconds
+
+fastest when loop takes different time : guided
+
+The guided scheme would allot the loop with i = 15 which takes over 15 seconds to one thread and more multiple smaller loops like i = 0,1,2 to ,say, one thread does balancing the execution time of threads - thus lesser  time
+
+Q2)
+
+1 thread : 9.9207 seconds
+2 thread : 8.684880 seconds
+4 thread : 5.618537 seconds
+6 thread : 3.465771 seconds
+
+
+(a) 2.86247995
+(b) 1.76570876
+(c) The work cannot be divided exactly equally among the four threads and the overhead of using more threads adds for 4 threads
+
+
+
+4 threads  4 threads  4 threads  4 threads 
+ 100000000 trials, pi is 3.393790  in 9.768539 seconds
+
+real	0m9.772s
+user	0m35.772s
+sys	0m0.080s
+
+4 threads  4 threads  4 threads  4 threads 
+ 100000000 trials, pi is 3.581569  in 5.618537 seconds
+
+real	0m5.623s
+user	0m20.714s
+sys	0m0.040s
+
+
+4 threads  4 threads  4 threads  4 threads 
+ 100000000 trials, pi is 3.456011  in 9.031547 seconds
+
+real	0m9.035s
+user	0m32.944s
+sys	0m0.072s
+
+
+2 threads  2 threads 
+ 100000000 trials, pi is 3.179965  in 8.684880 seconds
+
+real	0m8.689s
+user	0m17.264s
+sys	0m0.028s
+
+ 1 threads 
+ 100000000 trials, pi is 3.141494  in 3.465771 seconds
+
+real	0m3.469s
+user	0m3.469s
+sys	0m0.000s
+
+4 threads  4 threads  4 threads  4 threads 
+ 100000000 trials, pi is 3.375713  in 9.450796 seconds
+
+real	0m9.454s
+user	0m33.682s
+sys	0m0.117s
+
+ 6 threads  6 threads  6 threads  6 threads  6 threads  6 threads 
+ 100000000 trials, pi is 3.185585  in 9.920792 seconds
+
+real	0m9.924s
+user	0m34.786s
+sys	0m0.068s
+
+
+
+Q3) 1 thread 
+Result: 292 iterations
+  a[  87][  12] = 0.461410898567096772
+  a[  87][   6] = 0.647445880716128297
+  a[  50][  50] = 8.28741719222325331e-05
+  a[   6][  87] = 0.647445880716128408
+  a[  12][  87] = 0.461410898567096772
+Runtime: 0.096 s
+Performance: 0.117 GFlop/s
+
+real	0m0.106s
+user	0m0.106s
+sys	0m0.000s
+
+2 :
+
+Result: 292 iterations
+  a[  87][  12] = 0.555967970563436387
+  a[  87][   6] = 0.705844503366342413
+  a[  50][  50] = 0.00026375634662432969
+  a[   6][  87] = 0.647613886669352601
+  a[  12][  87] = 0.461913183634677982
+Runtime: 0.325 s
+Performance: 0.034 GFlop/s
+
+real	0m0.335s
+user	0m0.662s
+sys	0m0.000s
+
+4 :
+
+Result: 291 iterations
+  a[  87][  12] = 0.509448301595691988
+  a[  87][   6] = 0.677094076504366482
+  a[  50][  50] = 0.000131844447342869175
+  a[   6][  87] = 0.647238221610062392
+  a[  12][  87] = 0.461270039733455095
+Runtime: 0.861 s
+Performance: 0.013 GFlop/s
+
+real	0m0.872s
+user	0m3.406s
+sys	0m0.004s
+
+6 :
+
+Result: 143 iterations
+  a[  87][  12] = 0.531179224223822466
+  a[  87][   6] = 0.690727120597745436
+  a[  50][  50] = 0.000201772691038741656
+  a[   6][  87] = 0.659898210193893275
+  a[  12][  87] = 0.477424766495953501
+Runtime: 0.553 s
+Performance: 0.010 GFlop/s
+
+real	0m0.562s
+user	0m1.937s
+sys	0m0.024s
+(a) - 
+threads : run time 
+
+1 : 0.861 s
+
+2 : 0.553 s
+
+4 : 0.325 s
+
+6 : 0.096 s
+
+(a) runtime speed up with 6 threads 
+    8.96875
+
+(b) dynamic without chunks : 0.747 s
+    static : 0.543 s
+    dymanic chunk 100 : 0.548 s
+    dynamic chunk 200 : 0.510 s
+    guided : 0.498 s
+
+
+Guided is better.
+
+
+Q4)
+
+1. Verified
+2. Balance goes to 0 as in 1.
+
+
+   1 thread : 0.033s
+   4 thread : 0.029s
+
+3.Balance goes to 0 
+
+  1 thread : 0.034s
+  4 thread : 0.032s
+
+4.1 : 0.032s
+  4 : 0.033s
+
+5.1 : 0.030s
+  4 : 0.032s 
+
+5. is a little better than 4.
+
+
+
+
+
+

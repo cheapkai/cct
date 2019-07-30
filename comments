@@ -1,0 +1,42 @@
+
+void decompose_cpu : 
+
+the training of CPU PQ decomposition
+ because we want to terminate when the decrease of error is small enough, 
+ so we have to keep all the training data stored in a vector, and randomly shuffle
+ the data after each iteration.
+
+/*
+    stop condition is the realtive decrease in error: when the ratio of 
+    previous decrease in error to current decrease in error is less than 0.05
+    */
+
+in svd.h :
+
+decompose_CPU :
+
+/ decompose the matrix with CPU
+/*input:  buffer: from the training data file
+          batch_size: read a batch from the input file
+          num_users: the total number of users
+          num_items: the total number of items (used to define matrix dimension)
+          num_f : the dimension of latent factors
+          step_size: training step size, set to 0.01
+          regulation : regulation term set to prevent overfitting, set to 0.005
+output:   void; the final trained model of rating matrix will be writteninto a CSV file
+*/
+
+
+decompose GPU :
+
+/ decompose the matrix with GPU (as an interface between stream, same as CPU)
+/*input:  buffer: from the training data file
+          batch_size: read a batch from the input file
+          num_users: the total number of users
+          num_items: the total number of items (used to define matrix dimension)
+          num_f : the dimension of latent factors
+          step_size: training step size, set to 0.01
+          regulation : regulation term set to prevent overfitting, set to 0.005
+output:   void; the final trained model of rating matrix will be writteninto a CSV file
+*/
+

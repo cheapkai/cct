@@ -1,0 +1,1797 @@
+LSTM
+
+graph.py
+
+#informal graph plotting script
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+fire_output = np.load('Data_20_2hyp/Outputs/res_fire5.npy', mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+fire_pred = np.load('Data_20_2hyp/Preds/pred_fire5.npy', mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+
+print fire_pred.shape
+print fire_output.shape
+
+x=[]
+for i in xrange(0,99):
+	x.append(i)
+plt.figure('data')
+plt.plot(x,fire_output[0])
+plt.plot(x,fire_pred[0])
+
+plt.plot(x,fire_output[10])
+plt.plot(x,fire_pred[10])
+
+plt.plot(x,fire_output[22])
+plt.plot(x,fire_pred[22])
+
+
+# for i in fire_output:
+# 	plt.plot(x,i)
+# for i in fire_pred:
+# 	plt.plot(x,i)
+plt.show()
+
+LSTM_final.py
+
+### FIRE DOMAIN ONLY
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import cPickle
+from collections import defaultdict
+import sys, os, math, re
+os.environ['KERAS_BACKEND']='tensorflow'
+from keras.preprocessing.sequence import pad_sequences
+from keras.layers import LSTM, Dense
+from keras.models import Sequential
+from sklearn.metrics import mean_squared_error
+import matplotlib
+
+from keras.models import model_from_json
+from pandas import HDFStore 
+
+max_sen_len = 100
+
+#dir_list = [ 'Data_20_2hyp/', 'Data_20_4hyp/', 'Data_50_2hyp/', 'Data_50_4hyp/', 'Data_100_2hyp/', 'Data_100_4hyp/' ] 
+dir_list = [ 'Data_50_2hyp/', 'Data_50_4hyp/', 'Data_100_2hyp/', 'Data_100_4hyp/' ] 
+
+input_flist = [ 'Inputs/fire2.csv', 'Inputs/fire5.csv', 'Inputs/fire10.csv', 'Inputs/fire20.csv', 'Inputs/fire50.csv']
+output_flist = [ 'Outputs/res_fire2.npy', 'Outputs/res_fire5.npy', 'Outputs/res_fire10.npy', 'Outputs/res_fire20.npy', 'Outputs/res_fire50.npy']
+preds_flist = [ 'Preds/pred_fire2.npy', 'Preds/pred_fire5.npy', 'Preds/pred_fire10.npy', 'Preds/pred_fire20.npy', 'Preds/pred_fire50.npy']
+
+# Iterate through dir_list using dir_name
+# Iterate through input_flist using input_fname
+# Iterate through output_flist using output_fname
+# Iterate through preds_flist using preds_fname
+
+for dir_name in dir_list:
+
+	for index_ in xrange(5):
+
+		if dir_name == 'Data_50_2hyp/' and index_ == 0:
+			continue
+		if dir_name == 'Data_50_2hyp/' and index_ == 1:
+			continue
+		input_fname = input_flist[index_]
+		output_fname = output_flist[index_]
+		preds_fname = preds_flist[index_]
+
+		print (str (dir_name + input_fname))
+
+		dataset_inter = []
+		ms = open(str(dir_name + input_fname),'r')
+		for line in ms.readlines():
+		    val = line.split()
+		    val = [float(i) for i in val]
+		    dataset_inter.append(val)
+		dataset_inter = np.array(dataset_inter)
+
+		dataset = []
+		dataset = np.array(dataset_inter)
+		dataset = dataset.astype('float32')
+
+		# x=[]
+		# for i in xrange(0,100):
+		# 	x.append(i)
+		# plt.figure('data')
+		# for i in dataset:
+		# 	plt.plot(x,i)
+		# plt.show()
+
+		np.random.seed(7)
+		# np.random.shuffle(dataset)
+		dataset = np.reshape(dataset, (dataset.shape[0], dataset.shape[1], 1))
+
+		#################################
+		# split into train and test sets
+		val_split = 0.3
+		train_size = int(len(dataset) * (1.0 - val_split))
+		test_size = len(dataset) - train_size
+
+		train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
+
+		x_train = train[:,:-1]
+		y_train = train[:,1:]
+
+		x_test = test[:,:-1]
+		y_test = test[:,1:]
+		#################################
+
+		#x, y = dataset[:,:-1], dataset[:,1:]
+
+		############### change model from sequence prediction to last value prediction ###################
+
+		y_train_last = [[y_train[i,-1] for j in xrange(0,y_train.shape[1])] for i in xrange(0,y_train.shape[0])]
+
+		y_test_last = [[y_test[i,-1] for j in xrange(0,y_test.shape[1])] for i in xrange(0,y_test.shape[0])]
+
+		y_train_last = np.array(y_train_last)
+		y_test_last = np.array(y_test_last)
+
+		###################################################################################################
+
+		model = Sequential()
+		model.add (LSTM (1, input_shape = (99,1), return_sequences=True, stateful=False, dtype='float32', dropout=0.3, recurrent_dropout=0.3))
+		model.compile(loss="mse", optimizer="adam", metrics=['accuracy'])
+		# model.fit (x_train, y_train, batch_size=1, epochs=20, validation_data=(x_test, y_test), shuffle=True)
+		model.fit (x_train, y_train_last, batch_size=1, epochs=10, validation_data=(x_test, y_test_last), shuffle=True)
+		predictions = model.predict(x_test)
+
+		with open(str(dir_name + preds_fname),'wb') as pr: 
+			np.save(pr,predictions)
+
+		with open(str(dir_name + output_fname),'wb') as res: 
+			np.save(res,y_test_last)
+
+		# a = np.load(fp)
+
+		# serialize model to JSON
+
+		'''
+		model_json = model.to_json()
+		with open("model_fire10.json", "w") as json_file:
+		    json_file.write(model_json)
+		# serialize weights to HDF5
+
+		'''
+
+		# ######## model.save_weights("model_boul10.h5")
+		# print("Saved model to disk")
+		 
+		# later...x
+		 
+		# # load json and create model
+		# json_file = open('model_boul10.json', 'r')
+		# loaded_model_json = json_file.read()
+		# json_file.close()
+		# loaded_model = model_from_json(loaded_model_json)
+		# # load weights into new model
+		# loaded_model.load_weights("model_boul10.h5")
+		# print("Loaded model from disk")
+		 
+		# # evaluate loaded model on test data
+		# loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+		# score = loaded_model.evaluate(X, Y, verbose=0)
+		# print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))
+
+lstm_smooth_2hyp.py
+
+import random
+import numpy as np
+import math
+import numpy.polynomial.polynomial as poly
+import matplotlib
+import matplotlib.pyplot as plt
+import operator
+import matplotlib.backends.backend_pdf
+from scipy.stats import *
+import csv
+
+########## Generating Utilities according to Tim Barslaag #########
+
+def GenerateTimUtility( rv,rounds):
+	l=[]
+	l.append(rv);
+	for i in range(1,rounds):
+		l.append(float((l[i-1]+1)*(l[i-1]+1))/4)
+	return l
+
+###################################################################
+
+def getflag(direction,Gridcoords,GridSize):
+	flag=0
+	if(direction==1):
+		if(Gridcoords[0]!=0):
+			Gridcoords[0]-=1                 ### Moving North
+		if(Gridcoords[1]==GridSize-1):
+			flag=3
+		elif(Gridcoords[1]==0):
+			flag=2
+		elif(Gridcoords[0]+1==GridSize-1):
+			flag=4
+	elif(direction==2):
+		if(Gridcoords[1]!=0):
+			Gridcoords[1]-=1                 ### Moving West
+		if(Gridcoords[0]==0):
+			flag=1
+		elif(Gridcoords[1]+1==GridSize-1):
+			flag==3
+		elif(Gridcoords[0]==GridSize-1):
+			flag=4
+
+	elif(direction==3):
+		if(Gridcoords[1]!=GridSize-1):
+			Gridcoords[1]+=1                 ### Moving East
+		if(Gridcoords[0]==GridSize-1):
+			flag=4
+		elif(Gridcoords[0]==0):
+			flag=1
+		elif(Gridcoords[1]-1==0):
+			flag=2
+	else:
+		if(Gridcoords[0]!=GridSize-1):
+			Gridcoords[0]+=1                 ### Moving South
+		if(Gridcoords[0]-1==0):
+			flag=1
+		elif(Gridcoords[1]==GridSize-1):
+			flag=3
+		elif(Gridcoords[1]==0):
+			flag=2
+	return flag
+	
+#############################################################
+def Firerv(RV,roundnum,Deadline,UpdateRate,GridSize,Gridcoords):
+	ManPower=[12,10,7,4]
+	Utilities=[0.75,0.57,0.321,0.12]
+	
+	if(roundnum==0):
+		# print "---round 1: =="
+		direction=random.randint(1,4)
+		# direction=random.choice([1,4])
+		### Gridcoords Updation 
+		flag=getflag(direction,Gridcoords,GridSize)
+		# print "------"
+		# print direction
+		# print Gridcoords
+		# print "------"
+		if(flag==0 ):
+			return Utilities[direction-1]
+			#return getReservationUtility(ManPower[direction-1])
+
+		else:	
+
+			### commented by Kritika
+			#print "This case: "+str(flag) + " "+ str(ManPower[direction-1] )
+			###
+
+			# return getReservationUtility( max (ManPower[flag-1], ManPower[direction-1] )) 
+			return max (Utilities[flag-1], Utilities[direction-1] )
+
+	elif(roundnum%UpdateRate==0):
+		# print "---update == " + str(roundnum)   
+		direction=random.randint(1,4)
+		# direction=random.choice([1,4])
+		flag=getflag(direction,Gridcoords,GridSize)
+		# print "------"
+		# print direction
+		# print Gridcoords
+		# print "------"
+		if(flag==0 ):
+			# return getReservationUtility(ManPower[direction-1])
+			return Utilities[direction-1]
+
+		else:	
+			# print "This case: "+str(flag) + " "+ str(ManPower[direction-1] )
+			# return getReservationUtility( max (ManPower[flag-1], ManPower[direction-1] ) )
+			return Utilities[direction-1]
+
+	else:
+		return RV[len(RV)-1]
+
+
+#############################################################
+
+def getprobability( rows ):
+	#probabilities=[[0.25,0.25,0.25,0.25]]
+	probabilities=[[0.5,0.5]]
+	cnt =0
+	l=[]
+	for i in rows:
+		l.append(float(i))
+		cnt=cnt+1
+		if(cnt%2==0):
+			probabilities.append(l)
+			l=[]
+	return probabilities
+
+
+if __name__ == '__main__':
+
+
+	Average_rv=[]
+	AverageUtilities_Tims=[]
+	AverageUtilities_lstm=[]
+
+	####----- CSV parsing ---########3
+
+	rows=[]
+	fields=[]
+
+
+	dir_list = [ 'Data_20_2hyp/', 'Data_50_2hyp/', 'Data_100_2hyp/' ]
+	class_pred_probs_list = ['pred_fire2.csv', 'pred_fire5.csv', 'pred_fire10.csv', 'pred_fire20.csv', 'pred_fire50.csv', ]
+	# update rate assumed to be same
+	# grid size assumed to be same
+
+	for dir_name in dir_list:
+		for file_name in class_pred_probs_list:
+
+			print (str(dir_name + "Class_Pred_Probs/" + file_name))
+
+			with open(str(dir_name + "Class_Pred_Probs/" + file_name), 'r') as csvfile:
+				csvreader = csv.reader(csvfile)
+				fields = csvreader.next()
+				for row in csvreader:
+					rows.append(row)
+
+			for iterations in xrange(1,100):
+				probabilities=getprobability(rows[iterations-1])
+				# probabilities=getprobability(rows[22])
+				# print probabilities[1]
+
+				RV=[0]
+				Deadline = 100
+				intervals=2
+				UpdateRate=2     ##### keep updating the updaterate according to csv file parsed
+				random_rv=[0.12,0.75]
+
+				# iterations=1
+
+				Utilities=[]
+				actual_utility=[]
+
+				for rv in random_rv:
+						Utilities.append(GenerateTimUtility(rv,Deadline))
+						# Utilities.append(boulwareUtilities(rv,Deadline))
+				new_probability = probabilities
+				lstmUtilities=[]
+
+				x=[]
+				for i in xrange(1,Deadline+1):
+					x.append(i)
+				x_belief=[]
+				for i in xrange(0,Deadline+1):
+					x_belief.append(i)
+
+				GridSize=20
+				Gridcoords=[GridSize/2 ,GridSize/2]
+
+			####------ Negotiation starts ------######
+				for roundnum in xrange(1,Deadline+1):
+
+
+					new_CombinedUtility=0
+					for i in xrange(0,len(new_probability[0])):
+						new_CombinedUtility+=new_probability[roundnum-1][i]*Utilities[i][len(Utilities[i])-roundnum]
+
+					lstmUtilities.append(float("{0:.4f}".format(new_CombinedUtility)))
+					# actual_utility.append(float("{0:.4f}".format(utility_RV[len(utility_RV)-roundnum])))
+
+			# print lstmUtilities
+
+			##### --------- aVerages over iterations ---#####
+				if(iterations==1):
+					Average_rv=RV
+					# AverageUtilities_Tims=actual_utility
+					AverageUtilities_lstm=lstmUtilities
+
+				else:
+					Average_rv=np.array(Average_rv,dtype=float)*(iterations-1)
+					# AverageUtilities_Tims=np.array(AverageUtilities_Tims,dtype=float)*(iterations-1)
+					AverageUtilities_lstm=np.array(AverageUtilities_lstm,dtype=float)*(iterations-1)
+
+					# print Average_rv
+					Average_rv=map(operator.add,Average_rv,RV)
+					# AverageUtilities_Tims=map(operator.add,AverageUtilities_Tims,actual_utility)
+					AverageUtilities_lstm=map(operator.add,AverageUtilities_lstm,lstmUtilities)
+
+					Average_rv=np.array(Average_rv)/iterations
+					# AverageUtilities_Tims=np.array(AverageUtilities_Tims)/iterations
+					AverageUtilities_lstm=np.array(AverageUtilities_lstm)/iterations
+
+				### Commented by Kritika
+				# print "---- " + str(iterations) + " -----"
+				###
+
+			
+			lstmError=0
+
+			for i in xrange(2,6):
+				lstm_fit=np.polyfit(x,AverageUtilities_lstm,i,full=True)
+
+				if(i==2):
+					
+					lstmError=lstm_fit[1]
+
+					lstm_index=i
+
+				else:
+					
+					if(lstm_fit[1]<lstmError):
+						lstmError=lstm_fit[1]
+						lstm_index=i
+
+
+			legend_properties = {'weight':'bold', 'size':20}			
+			
+
+			plt.figure('AverageUtilities lstm')
+			plt.title('LSTM',fontsize=20, fontweight='bold')
+			coefs=poly.polyfit(x,AverageUtilities_lstm,lstm_index)
+			ffit=poly.polyval(x,coefs)
+
+			
+			Bay,=plt.plot(x,AverageUtilities_lstm, linestyle='-', color='k', linewidth=1.5)
+			Bayfit,=plt.plot(x,ffit, linestyle='--', color='g', linewidth=3.5)
+			plt.legend([Bay,Bayfit],["LSTM Utilities","Fitted Utilities"],loc=6,ncol=1, handlelength=4,prop=legend_properties)
+
+			plt.yticks(fontsize=20,fontweight='bold')
+			plt.xticks(fontsize=20,fontweight='bold')
+			# plt.plot(Average_rv,'ro')
+			# plt.plot(AverageUtilities_Normalised,'r--',ffit,'g--')
+			plt.xlabel('Rounds',fontsize=20, fontweight='bold')
+			plt.ylabel('Utilities',fontsize=20, fontweight='bold')
+			plt.savefig('lstm.pdf',format='pdf', dpi=1000)
+
+			### Commented by Kritika
+			# print '######################'
+			# print "Smoothness"
+			###
+			print lstmError
+
+			### Commented by Kritika
+			# print '######################'
+			###
+
+lstm_smooth_4hyp.py
+
+import random
+import numpy as np
+import math
+import numpy.polynomial.polynomial as poly
+import matplotlib
+import matplotlib.pyplot as plt
+import operator
+import matplotlib.backends.backend_pdf
+from scipy.stats import *
+import csv
+
+########## Generating Utilities according to Tim Barslaag #########
+
+def GenerateTimUtility( rv,rounds):
+	l=[]
+	l.append(rv);
+	for i in range(1,rounds):
+		l.append(float((l[i-1]+1)*(l[i-1]+1))/4)
+	return l
+
+###################################################################
+
+def getflag(direction,Gridcoords,GridSize):
+	flag=0
+	if(direction==1):
+		if(Gridcoords[0]!=0):
+			Gridcoords[0]-=1                 ### Moving North
+		if(Gridcoords[1]==GridSize-1):
+			flag=3
+		elif(Gridcoords[1]==0):
+			flag=2
+		elif(Gridcoords[0]+1==GridSize-1):
+			flag=4
+	elif(direction==2):
+		if(Gridcoords[1]!=0):
+			Gridcoords[1]-=1                 ### Moving West
+		if(Gridcoords[0]==0):
+			flag=1
+		elif(Gridcoords[1]+1==GridSize-1):
+			flag==3
+		elif(Gridcoords[0]==GridSize-1):
+			flag=4
+
+	elif(direction==3):
+		if(Gridcoords[1]!=GridSize-1):
+			Gridcoords[1]+=1                 ### Moving East
+		if(Gridcoords[0]==GridSize-1):
+			flag=4
+		elif(Gridcoords[0]==0):
+			flag=1
+		elif(Gridcoords[1]-1==0):
+			flag=2
+	else:
+		if(Gridcoords[0]!=GridSize-1):
+			Gridcoords[0]+=1                 ### Moving South
+		if(Gridcoords[0]-1==0):
+			flag=1
+		elif(Gridcoords[1]==GridSize-1):
+			flag=3
+		elif(Gridcoords[1]==0):
+			flag=2
+	return flag
+	
+#############################################################
+def Firerv(RV,roundnum,Deadline,UpdateRate,GridSize,Gridcoords):
+	ManPower=[12,10,7,4]
+	Utilities=[0.75,0.57,0.321,0.12]
+	
+	if(roundnum==0):
+		# print "---round 1: =="
+		direction=random.randint(1,4)
+		# direction=random.choice([1,4])
+		### Gridcoords Updation 
+		flag=getflag(direction,Gridcoords,GridSize)
+		# print "------"
+		# print direction
+		# print Gridcoords
+		# print "------"
+		if(flag==0 ):
+			return Utilities[direction-1]
+			#return getReservationUtility(ManPower[direction-1])
+
+		else:	
+
+			### commented by Kritika
+			#print "This case: "+str(flag) + " "+ str(ManPower[direction-1] )
+			###
+
+			# return getReservationUtility( max (ManPower[flag-1], ManPower[direction-1] )) 
+			return max (Utilities[flag-1], Utilities[direction-1] )
+
+	elif(roundnum%UpdateRate==0):
+		# print "---update == " + str(roundnum)   
+		direction=random.randint(1,4)
+		# direction=random.choice([1,4])
+		flag=getflag(direction,Gridcoords,GridSize)
+		# print "------"
+		# print direction
+		# print Gridcoords
+		# print "------"
+		if(flag==0 ):
+			# return getReservationUtility(ManPower[direction-1])
+			return Utilities[direction-1]
+
+		else:	
+			# print "This case: "+str(flag) + " "+ str(ManPower[direction-1] )
+			# return getReservationUtility( max (ManPower[flag-1], ManPower[direction-1] ) )
+			return Utilities[direction-1]
+
+	else:
+		return RV[len(RV)-1]
+
+
+#############################################################
+
+def getprobability( rows ):
+	probabilities=[[0.25,0.25,0.25,0.25]]
+	cnt =0
+	l=[]
+	for i in rows:
+		l.append(float(i))
+		cnt=cnt+1
+		if(cnt%4==0):
+			probabilities.append(l)
+			l=[]
+	return probabilities
+
+
+if __name__ == '__main__':
+
+
+	Average_rv=[]
+	AverageUtilities_Tims=[]
+	AverageUtilities_lstm=[]
+
+	####----- CSV parsing ---########3
+
+	rows=[]
+	fields=[]
+
+
+	dir_list = [ 'Data_20_4hyp/', 'Data_50_4hyp/', 'Data_100_4hyp/' ]
+	class_pred_probs_list = ['pred_fire2.csv', 'pred_fire5.csv', 'pred_fire10.csv', 'pred_fire20.csv', 'pred_fire50.csv', ]
+	# update rate assumed to be same
+	# grid size assumed to be same
+
+	for dir_name in dir_list:
+		for file_name in class_pred_probs_list:
+
+			print (str(dir_name + "Class_Pred_Probs/" + file_name))
+
+			with open(str(dir_name + "Class_Pred_Probs/" + file_name), 'r') as csvfile:
+				csvreader = csv.reader(csvfile)
+				fields = csvreader.next()
+				for row in csvreader:
+					rows.append(row)
+
+			for iterations in xrange(1,100):
+				probabilities=getprobability(rows[iterations-1])
+				# probabilities=getprobability(rows[22])
+				# print probabilities[1]
+
+				RV=[0]
+				Deadline = 100
+				intervals=2
+				UpdateRate=2     ##### keep updating the updaterate according to csv file parsed
+				random_rv=[0.12,0.321,0.57,0.75]
+
+				# iterations=1
+				# random_rv=[0.25,0.75]
+
+				Utilities=[]
+				actual_utility=[]
+
+				for rv in random_rv:
+						Utilities.append(GenerateTimUtility(rv,Deadline))
+						# Utilities.append(boulwareUtilities(rv,Deadline))
+				new_probability = probabilities
+				lstmUtilities=[]
+
+				x=[]
+				for i in xrange(1,Deadline+1):
+					x.append(i)
+				x_belief=[]
+				for i in xrange(0,Deadline+1):
+					x_belief.append(i)
+
+				GridSize=20
+				Gridcoords=[GridSize/2 ,GridSize/2]
+
+			####------ Negotiation starts ------######
+				for roundnum in xrange(1,Deadline+1):
+
+
+					new_CombinedUtility=0
+					for i in xrange(0,len(new_probability[0])):
+						new_CombinedUtility+=new_probability[roundnum-1][i]*Utilities[i][len(Utilities[i])-roundnum]
+
+					lstmUtilities.append(float("{0:.4f}".format(new_CombinedUtility)))
+					# actual_utility.append(float("{0:.4f}".format(utility_RV[len(utility_RV)-roundnum])))
+
+			# print lstmUtilities
+
+			##### --------- aVerages over iterations ---#####
+				if(iterations==1):
+					Average_rv=RV
+					# AverageUtilities_Tims=actual_utility
+					AverageUtilities_lstm=lstmUtilities
+
+				else:
+					Average_rv=np.array(Average_rv,dtype=float)*(iterations-1)
+					# AverageUtilities_Tims=np.array(AverageUtilities_Tims,dtype=float)*(iterations-1)
+					AverageUtilities_lstm=np.array(AverageUtilities_lstm,dtype=float)*(iterations-1)
+
+					# print Average_rv
+					Average_rv=map(operator.add,Average_rv,RV)
+					# AverageUtilities_Tims=map(operator.add,AverageUtilities_Tims,actual_utility)
+					AverageUtilities_lstm=map(operator.add,AverageUtilities_lstm,lstmUtilities)
+
+					Average_rv=np.array(Average_rv)/iterations
+					# AverageUtilities_Tims=np.array(AverageUtilities_Tims)/iterations
+					AverageUtilities_lstm=np.array(AverageUtilities_lstm)/iterations
+
+				### Commented by Kritika
+				# print "---- " + str(iterations) + " -----"
+				###
+
+			
+			lstmError=0
+
+			for i in xrange(2,6):
+				lstm_fit=np.polyfit(x,AverageUtilities_lstm,i,full=True)
+
+				if(i==2):
+					
+					lstmError=lstm_fit[1]
+
+					lstm_index=i
+
+				else:
+					
+					if(lstm_fit[1]<lstmError):
+						lstmError=lstm_fit[1]
+						lstm_index=i
+
+
+			legend_properties = {'weight':'bold', 'size':20}			
+			
+
+			plt.figure('AverageUtilities lstm')
+			plt.title('LSTM',fontsize=20, fontweight='bold')
+			coefs=poly.polyfit(x,AverageUtilities_lstm,lstm_index)
+			ffit=poly.polyval(x,coefs)
+
+output_probabilities_2hyp.py
+
+import numpy as np
+
+dir_list = [ 'Data_20_2hyp/', 'Data_50_2hyp/', 'Data_100_2hyp/' ]
+# Iterate through dir_list using dir_name
+for dir_name in dir_list:
+
+	fire2 = np.load(str(dir_name + 'Outputs/res_fire2.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire5 = np.load(str(dir_name + 'Outputs/res_fire5.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire10 = np.load(str(dir_name + 'Outputs/res_fire10.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire20 = np.load(str(dir_name + 'Outputs/res_fire20.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire50 = np.load(str(dir_name + 'Outputs/res_fire50.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+
+	# intervals - halfs with open lower bound and closed upper bound
+	# [0 - 0.5] -- 0.5
+	# (0.5 - 1.0] -- 1.0
+
+	prob_list_fire2 = []
+	prob_list_fire5 = []
+	prob_list_fire10 = []
+	prob_list_fire20 = []
+	prob_list_fire50 = []
+
+	for i in xrange(100):
+
+		# classes: 1,2 COUNTS
+		c1_fire2 = 1
+		c2_fire2 = 1
+		total_fire2 = 2
+		prob_fire2 = []
+
+		c1_fire5 = 1
+		c2_fire5 = 1
+		total_fire5 = 2
+		prob_fire5 = []
+
+		c1_fire10 = 1
+		c2_fire10 = 1
+		total_fire10 = 2
+		prob_fire10 = []
+
+		c1_fire20 = 1
+		c2_fire20 = 1
+		total_fire20 = 2
+		prob_fire20 = []
+
+		c1_fire50 = 1
+		c2_fire50 = 1
+		total_fire50 = 2
+		prob_fire50 = []
+
+		for j in xrange(99):
+
+			if fire2[i][j] <= 0.5:
+				fire2[i][j] = 0.5
+				c1_fire2 += 1
+			elif fire2[i][j] <= 1.0:
+				fire2[i][j] = 1.0
+				c2_fire2 += 1
+			total_fire2 += 1
+			prob_fire2.append(float(c1_fire2)/total_fire2)
+			prob_fire2.append(float(c2_fire2)/total_fire2)
+
+			if fire5[i][j] <= 0.5:
+				fire5[i][j] = 0.5
+				c1_fire5 += 1
+			elif fire5[i][j] <= 1.0:
+				fire5[i][j] = 1.0
+				c2_fire5 += 1
+			total_fire5 += 1
+			prob_fire5.append(float(c1_fire5)/total_fire5)
+			prob_fire5.append(float(c2_fire5)/total_fire5)
+
+			if fire10[i][j] <= 0.5:
+				fire10[i][j] = 0.5
+				c1_fire10 += 1
+			elif fire10[i][j] <= 1.0:
+				fire10[i][j] = 1.0
+				c2_fire10 += 1
+			total_fire10 += 1
+			prob_fire10.append(float(c1_fire10)/total_fire10)
+			prob_fire10.append(float(c2_fire10)/total_fire10)
+
+			if fire20[i][j] <= 0.5:
+				fire20[i][j] = 0.5
+				c1_fire20 += 1
+			elif fire20[i][j] <= 1.0:
+				fire20[i][j] = 1.0
+				c2_fire20 += 1
+			total_fire20 += 1
+			prob_fire20.append(float(c1_fire20)/total_fire20)
+			prob_fire20.append(float(c2_fire20)/total_fire20)
+
+			if fire50[i][j] <= 0.5:
+				fire50[i][j] = 0.5
+				c1_fire50 += 1
+			elif fire50[i][j] <= 1.0:
+				fire50[i][j] = 1.0
+				c2_fire50 += 1
+			total_fire50 += 1
+			prob_fire50.append(float(c1_fire50)/total_fire50)
+			prob_fire50.append(float(c2_fire50)/total_fire50)
+			
+		prob_list_fire2.append(prob_fire2)
+		prob_list_fire5.append(prob_fire5)
+		prob_list_fire10.append(prob_fire10)
+		prob_list_fire20.append(prob_fire20)
+		prob_list_fire50.append(prob_fire50)
+
+	prob_list_fire2 = np.array(prob_list_fire2)
+	prob_list_fire5 = np.array(prob_list_fire5)
+	prob_list_fire10 = np.array(prob_list_fire10)
+	prob_list_fire20 = np.array(prob_list_fire20)
+	prob_list_fire50 = np.array(prob_list_fire50)
+
+	np.savetxt(str(dir_name + "Class_Output_Probs/res_fire2.csv"), prob_list_fire2, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Output_Probs/res_fire5.csv"), prob_list_fire5, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Output_Probs/res_fire10.csv"), prob_list_fire10, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Output_Probs/res_fire20.csv"), prob_list_fire20, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Output_Probs/res_fire50.csv"), prob_list_fire50, delimiter=",")
+
+output_probabilities_4hyp.py
+
+import numpy as np
+
+dir_list = [ 'Data_20_4hyp/', 'Data_50_4hyp/', 'Data_100_4hyp/' ]
+# Iterate through dir_list using dir_name
+
+for dir_name in dir_list:
+
+	fire2 = np.load(str(dir_name + 'Outputs/res_fire2.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire5 = np.load(str(dir_name + 'Outputs/res_fire5.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire10 = np.load(str(dir_name + 'Outputs/res_fire10.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire20 = np.load(str(dir_name + 'Outputs/res_fire20.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire50 = np.load(str(dir_name + 'Outputs/res_fire50.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+
+
+
+
+	# intervals - quartiles with open lower bound and closed upper bound
+	# [0 - 0.25] -- 0.25
+	# (0.25 - 0.5] -- 0.5
+	# (0.5 - 0.75] -- 0.75
+	# (0.75 - 1.0] -- 1.0
+
+	prob_list_fire2 = []
+	prob_list_fire5 = []
+	prob_list_fire10 = []
+	prob_list_fire20 = []
+	prob_list_fire50 = []
+
+	for i in xrange(100):
+
+		# classes: 1,2,3,4 COUNTS
+		c1_fire2 = 1
+		c2_fire2 = 1
+		c3_fire2 = 1
+		c4_fire2 = 1
+		total_fire2 = 4
+		prob_fire2 = []
+
+		# classes: 1,2,3,4 COUNTS
+		c1_fire5 = 1
+		c2_fire5 = 1
+		c3_fire5 = 1
+		c4_fire5 = 1
+		total_fire5 = 4
+		prob_fire5 = []
+
+		# classes: 1,2,3,4 COUNTS
+		c1_fire10 = 1
+		c2_fire10 = 1
+		c3_fire10 = 1
+		c4_fire10 = 1
+		total_fire10 = 4
+		prob_fire10 = []
+
+		# classes: 1,2,3,4 COUNTS
+		c1_fire20 = 1
+		c2_fire20 = 1
+		c3_fire20 = 1
+		c4_fire20 = 1
+		total_fire20 = 4
+		prob_fire20 = []
+
+		# classes: 1,2,3,4 COUNTS
+		c1_fire50 = 1
+		c2_fire50 = 1
+		c3_fire50 = 1
+		c4_fire50 = 1
+		total_fire50 = 4
+		prob_fire50 = []
+
+
+		for j in xrange(99):
+
+			if fire2[i][j] <= 0.25:
+				fire2[i][j] = 0.25
+				c1_fire2 += 1
+			elif fire2[i][j] <= 0.5:
+				fire2[i][j] = 0.5
+				c2_fire2 += 1
+			elif fire2[i][j] <= 0.75:
+				fire2[i][j] = 0.75
+				c3_fire2 += 1
+			elif fire2[i][j] <= 1.0:
+				fire2[i][j] = 1.0
+				c4_fire2 += 1
+			total_fire2 += 1
+			prob_fire2.append(float(c1_fire2)/total_fire2)
+			prob_fire2.append(float(c2_fire2)/total_fire2)
+			prob_fire2.append(float(c3_fire2)/total_fire2)
+			prob_fire2.append(float(c4_fire2)/total_fire2)
+
+			if fire5[i][j] <= 0.25:
+				fire5[i][j] = 0.25
+				c1_fire5 += 1
+			elif fire5[i][j] <= 0.5:
+				fire5[i][j] = 0.5
+				c2_fire5 += 1
+			elif fire5[i][j] <= 0.75:
+				fire5[i][j] = 0.75
+				c3_fire5 += 1
+			elif fire5[i][j] <= 1.0:
+				fire5[i][j] = 1.0
+				c4_fire5 += 1
+			total_fire5 += 1
+			prob_fire5.append(float(c1_fire5)/total_fire5)
+			prob_fire5.append(float(c2_fire5)/total_fire5)
+			prob_fire5.append(float(c3_fire5)/total_fire5)
+			prob_fire5.append(float(c4_fire5)/total_fire5)
+
+			if fire10[i][j] <= 0.25:
+				fire10[i][j] = 0.25
+				c1_fire10 += 1
+			elif fire10[i][j] <= 0.5:
+				fire10[i][j] = 0.5
+				c2_fire10 += 1
+			elif fire10[i][j] <= 0.75:
+				fire10[i][j] = 0.75
+				c3_fire10 += 1
+			elif fire10[i][j] <= 1.0:
+				fire10[i][j] = 1.0
+				c4_fire10 += 1
+			total_fire10 += 1
+			prob_fire10.append(float(c1_fire10)/total_fire10)
+			prob_fire10.append(float(c2_fire10)/total_fire10)
+			prob_fire10.append(float(c3_fire10)/total_fire10)
+			prob_fire10.append(float(c4_fire10)/total_fire10)
+
+			if fire20[i][j] <= 0.25:
+				fire20[i][j] = 0.25
+				c1_fire20 += 1
+			elif fire20[i][j] <= 0.5:
+				fire20[i][j] = 0.5
+				c2_fire20 += 1
+			elif fire20[i][j] <= 0.75:
+				fire20[i][j] = 0.75
+				c3_fire20 += 1
+			elif fire20[i][j] <= 1.0:
+				fire20[i][j] = 1.0
+				c4_fire20 += 1
+			total_fire20 += 1
+			prob_fire20.append(float(c1_fire20)/total_fire20)
+			prob_fire20.append(float(c2_fire20)/total_fire20)
+			prob_fire20.append(float(c3_fire20)/total_fire20)
+			prob_fire20.append(float(c4_fire20)/total_fire20)
+
+			if fire50[i][j] <= 0.25:
+				fire50[i][j] = 0.25
+				c1_fire50 += 1
+			elif fire50[i][j] <= 0.5:
+				fire50[i][j] = 0.5
+				c2_fire50 += 1
+			elif fire50[i][j] <= 0.75:
+				fire50[i][j] = 0.75
+				c3_fire50 += 1
+			elif fire50[i][j] <= 1.0:
+				fire50[i][j] = 1.0
+				c4_fire50 += 1
+			total_fire50 += 1
+			prob_fire50.append(float(c1_fire50)/total_fire50)
+			prob_fire50.append(float(c2_fire50)/total_fire50)
+			prob_fire50.append(float(c3_fire50)/total_fire50)
+			prob_fire50.append(float(c4_fire50)/total_fire50)
+			
+		prob_list_fire2.append(prob_fire2)
+		prob_list_fire5.append(prob_fire5)
+		prob_list_fire10.append(prob_fire10)
+		prob_list_fire20.append(prob_fire20)
+		prob_list_fire50.append(prob_fire50)
+
+	prob_list_fire2 = np.array(prob_list_fire2)
+	prob_list_fire5 = np.array(prob_list_fire5)
+	prob_list_fire10 = np.array(prob_list_fire10)
+	prob_list_fire20 = np.array(prob_list_fire20)
+	prob_list_fire50 = np.array(prob_list_fire50)
+
+	np.savetxt(str(dir_name + "Class_Output_Probs/res_fire2.csv"), prob_list_fire2, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Output_Probs/res_fire5.csv"), prob_list_fire5, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Output_Probs/res_fire10.csv"), prob_list_fire10, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Output_Probs/res_fire20.csv"), prob_list_fire20, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Output_Probs/res_fire50.csv"), prob_list_fire50, delimiter=",")
+
+prediction_2hyp.py
+
+import numpy as np
+import csv
+
+dir_list = [ 'Data_20_2hyp/', 'Data_50_2hyp/', 'Data_100_2hyp/'] 
+# Iterate through dir_list using dir_name
+
+for dir_name in dir_list:
+
+	print (str(dir_name))
+
+	fire2_out = np.load(str(dir_name + 'Outputs/res_fire2.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,-1]
+	fire5_out = np.load(str(dir_name + 'Outputs/res_fire5.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,-1]
+	fire10_out = np.load(str(dir_name + 'Outputs/res_fire10.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,-1]
+	fire20_out = np.load(str(dir_name + 'Outputs/res_fire20.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,-1]
+	fire50_out = np.load(str(dir_name + 'Outputs/res_fire50.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,-1]
+
+	fire2 = np.load(str(dir_name + 'Preds/pred_fire2.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire5 = np.load(str(dir_name + 'Preds/pred_fire5.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire10 = np.load(str(dir_name + 'Preds/pred_fire10.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire20 = np.load(str(dir_name + 'Preds/pred_fire20.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire50 = np.load(str(dir_name + 'Preds/pred_fire50.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+
+	######################
+
+	prob_list_fire2 = []
+	prob_list_fire5 = []
+	prob_list_fire10 = []
+	prob_list_fire20 = []
+	prob_list_fire50 = []
+
+	for i in xrange(100):
+
+		# classes: 1,2 COUNTS
+		c1_fire2 = 1
+		c2_fire2 = 1
+		total_fire2 = 2
+		prob_fire2 = []
+
+		c1_fire5 = 1
+		c2_fire5 = 1
+		total_fire5 = 2
+		prob_fire5 = []
+
+		c1_fire10 = 1
+		c2_fire10 = 1
+		total_fire10 = 2
+		prob_fire10 = []
+
+		c1_fire20 = 1
+		c2_fire20 = 1
+		total_fire20 = 2
+		prob_fire20 = []
+
+		c1_fire50 = 1
+		c2_fire50 = 1
+		total_fire50 = 2
+		prob_fire50 = []
+
+		for j in xrange(99):
+
+			if fire2[i][j] <= 0.5:
+				fire2[i][j] = 0.5
+				c1_fire2 += 1
+			elif fire2[i][j] <= 1.0:
+				fire2[i][j] = 1.0
+				c2_fire2 += 1
+			total_fire2 += 1
+			prob_fire2.append(float(c1_fire2)/total_fire2)
+			prob_fire2.append(float(c2_fire2)/total_fire2)
+			# float("{0:.4f}".format(x))
+
+			if fire5[i][j] <= 0.5:
+				fire5[i][j] = 0.5
+				c1_fire5 += 1
+			elif fire5[i][j] <= 1.0:
+				fire5[i][j] = 1.0
+				c2_fire5 += 1
+			total_fire5 += 1
+			prob_fire5.append(float(c1_fire5)/total_fire5)
+			prob_fire5.append(float(c2_fire5)/total_fire5)
+
+			if fire10[i][j] <= 0.5:
+				fire10[i][j] = 0.5
+				c1_fire10 += 1
+			elif fire10[i][j] <= 1.0:
+				fire10[i][j] = 1.0
+				c2_fire10 += 1
+			total_fire10 += 1
+			prob_fire10.append(float(c1_fire10)/total_fire10)
+			prob_fire10.append(float(c2_fire10)/total_fire10)
+
+			if fire20[i][j] <= 0.5:
+				fire20[i][j] = 0.5
+				c1_fire20 += 1
+			elif fire20[i][j] <= 1.0:
+				fire20[i][j] = 1.0
+				c2_fire20 += 1
+			total_fire20 += 1
+			prob_fire20.append(float(c1_fire20)/total_fire20)
+			prob_fire20.append(float(c2_fire20)/total_fire20)
+
+			if fire50[i][j] <= 0.5:
+				fire50[i][j] = 0.5
+				c1_fire50 += 1
+			elif fire50[i][j] <= 1.0:
+				fire50[i][j] = 1.0
+				c2_fire50 += 1
+			total_fire50 += 1
+			prob_fire50.append(float(c1_fire50)/total_fire50)
+			prob_fire50.append(float(c2_fire50)/total_fire50)
+
+		prob_list_fire2.append(prob_fire2)
+		prob_list_fire5.append(prob_fire5)
+		prob_list_fire10.append(prob_fire10)
+		prob_list_fire20.append(prob_fire20)
+		prob_list_fire50.append(prob_fire50)
+
+	prob_list_fire2 = np.array(prob_list_fire2)[0:100,-4:]
+	prob_list_fire5 = np.array(prob_list_fire5)[0:100,-4:]
+	prob_list_fire10 = np.array(prob_list_fire10)[0:100,-4:]
+	prob_list_fire20 = np.array(prob_list_fire20)[0:100,-4:]
+	prob_list_fire50 = np.array(prob_list_fire50)[0:100,-4:]
+
+	fire2_pred = []
+	fire5_pred = []
+	fire10_pred = []
+	fire20_pred = []
+	fire50_pred = []
+
+	for index in xrange(100) :
+		fire2_pred.append(prob_list_fire2[index][0] * 0.12 + prob_list_fire2[index][1] * 0.75)
+		fire5_pred.append(prob_list_fire5[index][0] * 0.12 + prob_list_fire5[index][1] * 0.75)
+		fire10_pred.append(prob_list_fire10[index][0] * 0.12 + prob_list_fire10[index][1] * 0.75)
+		fire20_pred.append(prob_list_fire20[index][0] * 0.12 + prob_list_fire20[index][1] * 0.75)
+		fire50_pred.append(prob_list_fire50[index][0] * 0.12 + prob_list_fire50[index][1] * 0.75)
+		
+	fire2_pred = np.array(fire2_pred)
+	fire5_pred = np.array(fire5_pred)
+	fire10_pred = np.array(fire10_pred)
+	fire20_pred = np.array(fire20_pred)
+	fire50_pred = np.array(fire50_pred)
+
+	####################################
+
+	fire2_diff = []
+	fire5_diff = []
+	fire10_diff = []
+	fire20_diff = []
+	fire50_diff = []
+
+	for index in xrange(100) :
+		fire2_diff.append(float(fire2_out[index] - fire2_pred[index]))
+		fire5_diff.append(float(fire5_out[index] - fire5_pred[index]))
+		fire10_diff.append(float(fire10_out[index] - fire10_pred[index]))
+		fire20_diff.append(float(fire20_out[index] - fire20_pred[index]))
+		fire50_diff.append(float(fire50_out[index] - fire50_pred[index]))
+
+	fire2_diff = np.array(fire2_diff)
+	fire5_diff = np.array(fire5_diff)
+	fire10_diff = np.array(fire10_diff)
+	fire20_diff = np.array(fire20_diff)
+	fire50_diff = np.array(fire50_diff)
+
+	np.savetxt(str(dir_name + "Differences/diff2.csv"), fire2_diff, delimiter=",")
+	np.savetxt(str(dir_name + "Differences/diff5.csv"), fire5_diff, delimiter=",")
+	np.savetxt(str(dir_name + "Differences/diff10.csv"), fire10_diff, delimiter=",")
+	np.savetxt(str(dir_name + "Differences/diff20.csv"), fire20_diff, delimiter=",")
+	np.savetxt(str(dir_name + "Differences/diff50.csv"), fire50_diff, delimiter=",")
+
+	print (np.average(fire2_diff))
+	print (np.average(fire5_diff))
+	print (np.average(fire10_diff))
+	print (np.average(fire20_diff))
+	print (np.average(fire50_diff))
+
+prediction_4hyp.py
+
+import numpy as np
+import csv
+
+dir_list = [ 'Data_20_2hyp/', 'Data_50_2hyp/', 'Data_100_2hyp/'] 
+# Iterate through dir_list using dir_name
+
+for dir_name in dir_list:
+
+	print (str(dir_name))
+
+	fire2_out = np.load(str(dir_name + 'Outputs/res_fire2.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,-1]
+	fire5_out = np.load(str(dir_name + 'Outputs/res_fire5.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,-1]
+	fire10_out = np.load(str(dir_name + 'Outputs/res_fire10.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,-1]
+	fire20_out = np.load(str(dir_name + 'Outputs/res_fire20.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,-1]
+	fire50_out = np.load(str(dir_name + 'Outputs/res_fire50.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,-1]
+
+	fire2 = np.load(str(dir_name + 'Preds/pred_fire2.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire5 = np.load(str(dir_name + 'Preds/pred_fire5.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire10 = np.load(str(dir_name + 'Preds/pred_fire10.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire20 = np.load(str(dir_name + 'Preds/pred_fire20.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire50 = np.load(str(dir_name + 'Preds/pred_fire50.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+
+	######################
+
+	prob_list_fire2 = []
+	prob_list_fire5 = []
+	prob_list_fire10 = []
+	prob_list_fire20 = []
+	prob_list_fire50 = []
+
+	for i in xrange(100):
+
+		# classes: 1,2 COUNTS
+		c1_fire2 = 1
+		c2_fire2 = 1
+		total_fire2 = 2
+		prob_fire2 = []
+
+		c1_fire5 = 1
+		c2_fire5 = 1
+		total_fire5 = 2
+		prob_fire5 = []
+
+		c1_fire10 = 1
+		c2_fire10 = 1
+		total_fire10 = 2
+		prob_fire10 = []
+
+		c1_fire20 = 1
+		c2_fire20 = 1
+		total_fire20 = 2
+		prob_fire20 = []
+
+		c1_fire50 = 1
+		c2_fire50 = 1
+		total_fire50 = 2
+		prob_fire50 = []
+
+		for j in xrange(99):
+
+			if fire2[i][j] <= 0.5:
+				fire2[i][j] = 0.5
+				c1_fire2 += 1
+			elif fire2[i][j] <= 1.0:
+				fire2[i][j] = 1.0
+				c2_fire2 += 1
+			total_fire2 += 1
+			prob_fire2.append(float(c1_fire2)/total_fire2)
+			prob_fire2.append(float(c2_fire2)/total_fire2)
+			# float("{0:.4f}".format(x))
+
+			if fire5[i][j] <= 0.5:
+				fire5[i][j] = 0.5
+				c1_fire5 += 1
+			elif fire5[i][j] <= 1.0:
+				fire5[i][j] = 1.0
+				c2_fire5 += 1
+			total_fire5 += 1
+			prob_fire5.append(float(c1_fire5)/total_fire5)
+			prob_fire5.append(float(c2_fire5)/total_fire5)
+
+			if fire10[i][j] <= 0.5:
+				fire10[i][j] = 0.5
+				c1_fire10 += 1
+			elif fire10[i][j] <= 1.0:
+				fire10[i][j] = 1.0
+				c2_fire10 += 1
+			total_fire10 += 1
+			prob_fire10.append(float(c1_fire10)/total_fire10)
+			prob_fire10.append(float(c2_fire10)/total_fire10)
+
+			if fire20[i][j] <= 0.5:
+				fire20[i][j] = 0.5
+				c1_fire20 += 1
+			elif fire20[i][j] <= 1.0:
+				fire20[i][j] = 1.0
+				c2_fire20 += 1
+			total_fire20 += 1
+			prob_fire20.append(float(c1_fire20)/total_fire20)
+			prob_fire20.append(float(c2_fire20)/total_fire20)
+
+			if fire50[i][j] <= 0.5:
+				fire50[i][j] = 0.5
+				c1_fire50 += 1
+			elif fire50[i][j] <= 1.0:
+				fire50[i][j] = 1.0
+				c2_fire50 += 1
+			total_fire50 += 1
+			prob_fire50.append(float(c1_fire50)/total_fire50)
+			prob_fire50.append(float(c2_fire50)/total_fire50)
+
+		prob_list_fire2.append(prob_fire2)
+		prob_list_fire5.append(prob_fire5)
+		prob_list_fire10.append(prob_fire10)
+		prob_list_fire20.append(prob_fire20)
+		prob_list_fire50.append(prob_fire50)
+
+	prob_list_fire2 = np.array(prob_list_fire2)[0:100,-4:]
+	prob_list_fire5 = np.array(prob_list_fire5)[0:100,-4:]
+	prob_list_fire10 = np.array(prob_list_fire10)[0:100,-4:]
+	prob_list_fire20 = np.array(prob_list_fire20)[0:100,-4:]
+	prob_list_fire50 = np.array(prob_list_fire50)[0:100,-4:]
+
+	fire2_pred = []
+	fire5_pred = []
+	fire10_pred = []
+	fire20_pred = []
+	fire50_pred = []
+
+	for index in xrange(100) :
+		fire2_pred.append(prob_list_fire2[index][0] * 0.12 + prob_list_fire2[index][1] * 0.75)
+		fire5_pred.append(prob_list_fire5[index][0] * 0.12 + prob_list_fire5[index][1] * 0.75)
+		fire10_pred.append(prob_list_fire10[index][0] * 0.12 + prob_list_fire10[index][1] * 0.75)
+		fire20_pred.append(prob_list_fire20[index][0] * 0.12 + prob_list_fire20[index][1] * 0.75)
+		fire50_pred.append(prob_list_fire50[index][0] * 0.12 + prob_list_fire50[index][1] * 0.75)
+		
+	fire2_pred = np.array(fire2_pred)
+	fire5_pred = np.array(fire5_pred)
+	fire10_pred = np.array(fire10_pred)
+	fire20_pred = np.array(fire20_pred)
+	fire50_pred = np.array(fire50_pred)
+
+	####################################
+
+	fire2_diff = []
+	fire5_diff = []
+	fire10_diff = []
+	fire20_diff = []
+	fire50_diff = []
+
+	for index in xrange(100) :
+		fire2_diff.append(float(fire2_out[index] - fire2_pred[index]))
+		fire5_diff.append(float(fire5_out[index] - fire5_pred[index]))
+		fire10_diff.append(float(fire10_out[index] - fire10_pred[index]))
+		fire20_diff.append(float(fire20_out[index] - fire20_pred[index]))
+		fire50_diff.append(float(fire50_out[index] - fire50_pred[index]))
+
+	fire2_diff = np.array(fire2_diff)
+	fire5_diff = np.array(fire5_diff)
+	fire10_diff = np.array(fire10_diff)
+	fire20_diff = np.array(fire20_diff)
+	fire50_diff = np.array(fire50_diff)
+
+	np.savetxt(str(dir_name + "Differences/diff2.csv"), fire2_diff, delimiter=",")
+	np.savetxt(str(dir_name + "Differences/diff5.csv"), fire5_diff, delimiter=",")
+	np.savetxt(str(dir_name + "Differences/diff10.csv"), fire10_diff, delimiter=",")
+	np.savetxt(str(dir_name + "Differences/diff20.csv"), fire20_diff, delimiter=",")
+	np.savetxt(str(dir_name + "Differences/diff50.csv"), fire50_diff, delimiter=",")
+
+	print (np.average(fire2_diff))
+	print (np.average(fire5_diff))
+	print (np.average(fire10_diff))
+	print (np.average(fire20_diff))
+	print (np.average(fire50_diff))
+
+Prediction Average Results.txt
+
+Prediction Average Results
+
+Data_20_4hyp/
+0.128480388629
+0.136370388227
+0.121637766084
+0.131300680569
+0.0963436891988
+Data_50_4hyp/
+0.0845903884944
+0.101960388156
+0.0929603882458
+0.139441165257
+0.000207961550095
+Data_100_4hyp/
+0.130445825041
+0.100100388932
+0.101420389297
+0.129868252072
+0.0728714565002
+
+Data_20_2hyp/
+0.340199998793
+0.390599999008
+0.327599998739
+0.239399998364
+0.0392489986053
+Data_50_2hyp/
+0.333899998766
+0.277199998525
+0.333899998766
+0.327599998739
+0.0224909986321
+Data_100_2hyp/
+0.314999998686
+0.302399998632
+0.327599998739
+0.0102059985516
+0.0249479986857
+
+pred_probabilities_2hyp.py
+
+import numpy as np
+
+dir_list = [ 'Data_20_2hyp/', 'Data_50_2hyp/', 'Data_100_2hyp/' ]
+# Iterate through dir_list using dir_name
+
+for dir_name in dir_list:
+
+	fire2 = np.load(str(dir_name + 'Preds/pred_fire2.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire5 = np.load(str(dir_name + 'Preds/pred_fire5.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire10 = np.load(str(dir_name + 'Preds/pred_fire10.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire20 = np.load(str(dir_name + 'Preds/pred_fire20.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire50 = np.load(str(dir_name + 'Preds/pred_fire50.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+
+	# intervals - halfs with open lower bound and closed upper bound
+	# [0.25 - 0.5] -- 0.5
+	# (0.75 - 1.0] -- 1.0
+
+	prob_list_fire2 = []
+	prob_list_fire5 = []
+	prob_list_fire10 = []
+	prob_list_fire20 = []
+	prob_list_fire50 = []
+
+	for i in xrange(100):
+
+		# classes: 1,2 COUNTS
+		c1_fire2 = 1
+		c2_fire2 = 1
+		total_fire2 = 2
+		prob_fire2 = []
+
+		c1_fire5 = 1
+		c2_fire5 = 1
+		total_fire5 = 2
+		prob_fire5 = []
+
+		c1_fire10 = 1
+		c2_fire10 = 1
+		total_fire10 = 2
+		prob_fire10 = []
+
+		c1_fire20 = 1
+		c2_fire20 = 1
+		total_fire20 = 2
+		prob_fire20 = []
+
+		c1_fire50 = 1
+		c2_fire50 = 1
+		total_fire50 = 2
+		prob_fire50 = []
+
+		for j in xrange(99):
+
+			if fire2[i][j] <= 0.5:
+				fire2[i][j] = 0.5
+				c1_fire2 += 1
+			elif fire2[i][j] <= 1.0:
+				fire2[i][j] = 1.0
+				c2_fire2 += 1
+			total_fire2 += 1
+			prob_fire2.append(float(c1_fire2)/total_fire2)
+			prob_fire2.append(float(c2_fire2)/total_fire2)
+			# float("{0:.4f}".format(x))
+
+			if fire5[i][j] <= 0.5:
+				fire5[i][j] = 0.5
+				c1_fire5 += 1
+			elif fire5[i][j] <= 1.0:
+				fire5[i][j] = 1.0
+				c2_fire5 += 1
+			total_fire5 += 1
+			prob_fire5.append(float(c1_fire5)/total_fire5)
+			prob_fire5.append(float(c2_fire5)/total_fire5)
+
+			if fire10[i][j] <= 0.5:
+				fire10[i][j] = 0.5
+				c1_fire10 += 1
+			elif fire10[i][j] <= 1.0:
+				fire10[i][j] = 1.0
+				c2_fire10 += 1
+			total_fire10 += 1
+			prob_fire10.append(float(c1_fire10)/total_fire10)
+			prob_fire10.append(float(c2_fire10)/total_fire10)
+
+			if fire20[i][j] <= 0.5:
+				fire20[i][j] = 0.5
+				c1_fire20 += 1
+			elif fire20[i][j] <= 1.0:
+				fire20[i][j] = 1.0
+				c2_fire20 += 1
+			total_fire20 += 1
+			prob_fire20.append(float(c1_fire20)/total_fire20)
+			prob_fire20.append(float(c2_fire20)/total_fire20)
+
+			if fire50[i][j] <= 0.5:
+				fire50[i][j] = 0.5
+				c1_fire50 += 1
+			elif fire50[i][j] <= 1.0:
+				fire50[i][j] = 1.0
+				c2_fire50 += 1
+			total_fire50 += 1
+			prob_fire50.append(float(c1_fire50)/total_fire50)
+			prob_fire50.append(float(c2_fire50)/total_fire50)
+
+		prob_list_fire2.append(prob_fire2)
+		prob_list_fire5.append(prob_fire5)
+		prob_list_fire10.append(prob_fire10)
+		prob_list_fire20.append(prob_fire20)
+		prob_list_fire50.append(prob_fire50)
+
+	prob_list_fire2 = np.array(prob_list_fire2)
+	prob_list_fire5 = np.array(prob_list_fire5)
+	prob_list_fire10 = np.array(prob_list_fire10)
+	prob_list_fire20 = np.array(prob_list_fire20)
+	prob_list_fire50 = np.array(prob_list_fire50)
+
+	np.savetxt(str(dir_name + "Class_Pred_Probs/pred_fire2.csv"), prob_list_fire2, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Pred_Probs/pred_fire5.csv"), prob_list_fire5, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Pred_Probs/pred_fire10.csv"), prob_list_fire10, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Pred_Probs/pred_fire20.csv"), prob_list_fire20, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Pred_Probs/pred_fire50.csv"), prob_list_fire50, delimiter=",")
+
+pred_probabilities_4hyp.py
+
+import numpy as np
+
+dir_list = [ 'Data_20_4hyp/', 'Data_50_4hyp/', 'Data_100_4hyp/' ]
+# Iterate through dir_list using dir_name
+
+for dir_name in dir_list:
+
+	fire2 = np.load(str(dir_name + 'Preds/pred_fire2.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire5 = np.load(str(dir_name + 'Preds/pred_fire5.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire10 = np.load(str(dir_name + 'Preds/pred_fire10.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire20 = np.load(str(dir_name + 'Preds/pred_fire20.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+	fire50 = np.load(str(dir_name + 'Preds/pred_fire50.npy'), mmap_mode=None, allow_pickle=True, fix_imports=True, encoding='ASCII').reshape(300,99)[0:100,:]
+
+	# intervals - quartiles with open lower bound and closed upper bound
+	# [0 - 0.25] -- 0.25
+	# (0.25 - 0.5] -- 0.5
+	# (0.5 - 0.75] -- 0.75
+	# (0.75 - 1.0] -- 1.0
+
+	prob_list_fire2 = []
+	prob_list_fire5 = []
+	prob_list_fire10 = []
+	prob_list_fire20 = []
+	prob_list_fire50 = []
+
+	for i in xrange(100):
+
+		# classes: 1,2,3,4 COUNTS
+		c1_fire2 = 1
+		c2_fire2 = 1
+		c3_fire2 = 1
+		c4_fire2 = 1
+		total_fire2 = 4
+		prob_fire2 = []
+
+		# classes: 1,2,3,4 COUNTS
+		c1_fire5 = 1
+		c2_fire5 = 1
+		c3_fire5 = 1
+		c4_fire5 = 1
+		total_fire5 = 4
+		prob_fire5 = []
+
+		# classes: 1,2,3,4 COUNTS
+		c1_fire10 = 1
+		c2_fire10 = 1
+		c3_fire10 = 1
+		c4_fire10 = 1
+		total_fire10 = 4
+		prob_fire10 = []
+
+		# classes: 1,2,3,4 COUNTS
+		c1_fire20 = 1
+		c2_fire20 = 1
+		c3_fire20 = 1
+		c4_fire20 = 1
+		total_fire20 = 4
+		prob_fire20 = []
+
+		# classes: 1,2,3,4 COUNTS
+		c1_fire50 = 1
+		c2_fire50 = 1
+		c3_fire50 = 1
+		c4_fire50 = 1
+		total_fire50 = 4
+		prob_fire50 = []
+
+		for j in xrange(99):
+
+			if fire2[i][j] <= 0.25:
+				fire2[i][j] = 0.25
+				c1_fire2 += 1
+			elif fire2[i][j] <= 0.5:
+				fire2[i][j] = 0.5
+				c2_fire2 += 1
+			elif fire2[i][j] <= 0.75:
+				fire2[i][j] = 0.75
+				c3_fire2 += 1
+			elif fire2[i][j] <= 1.0:
+				fire2[i][j] = 1.0
+				c4_fire2 += 1
+			total_fire2 += 1
+			prob_fire2.append(float(c1_fire2)/total_fire2)
+			prob_fire2.append(float(c2_fire2)/total_fire2)
+			prob_fire2.append(float(c3_fire2)/total_fire2)
+			prob_fire2.append(float(c4_fire2)/total_fire2)
+			# float("{0:.4f}".format(x))
+
+			if fire5[i][j] <= 0.25:
+				fire5[i][j] = 0.25
+				c1_fire5 += 1
+			elif fire5[i][j] <= 0.5:
+				fire5[i][j] = 0.5
+				c2_fire5 += 1
+			elif fire5[i][j] <= 0.75:
+				fire5[i][j] = 0.75
+				c3_fire5 += 1
+			elif fire5[i][j] <= 1.0:
+				fire5[i][j] = 1.0
+				c4_fire5 += 1
+			total_fire5 += 1
+			prob_fire5.append(float(c1_fire5)/total_fire5)
+			prob_fire5.append(float(c2_fire5)/total_fire5)
+			prob_fire5.append(float(c3_fire5)/total_fire5)
+			prob_fire5.append(float(c4_fire5)/total_fire5)
+
+			if fire10[i][j] <= 0.25:
+				fire10[i][j] = 0.25
+				c1_fire10 += 1
+			elif fire10[i][j] <= 0.5:
+				fire10[i][j] = 0.5
+				c2_fire10 += 1
+			elif fire10[i][j] <= 0.75:
+				fire10[i][j] = 0.75
+				c3_fire10 += 1
+			elif fire10[i][j] <= 1.0:
+				fire10[i][j] = 1.0
+				c4_fire10 += 1
+			total_fire10 += 1
+			prob_fire10.append(float(c1_fire10)/total_fire10)
+			prob_fire10.append(float(c2_fire10)/total_fire10)
+			prob_fire10.append(float(c3_fire10)/total_fire10)
+			prob_fire10.append(float(c4_fire10)/total_fire10)
+
+			if fire20[i][j] <= 0.25:
+				fire20[i][j] = 0.25
+				c1_fire20 += 1
+			elif fire20[i][j] <= 0.5:
+				fire20[i][j] = 0.5
+				c2_fire20 += 1
+			elif fire20[i][j] <= 0.75:
+				fire20[i][j] = 0.75
+				c3_fire20 += 1
+			elif fire20[i][j] <= 1.0:
+				fire20[i][j] = 1.0
+				c4_fire20 += 1
+			total_fire20 += 1
+			prob_fire20.append(float(c1_fire20)/total_fire20)
+			prob_fire20.append(float(c2_fire20)/total_fire20)
+			prob_fire20.append(float(c3_fire20)/total_fire20)
+			prob_fire20.append(float(c4_fire20)/total_fire20)
+
+			if fire50[i][j] <= 0.25:
+				fire50[i][j] = 0.25
+				c1_fire50 += 1
+			elif fire50[i][j] <= 0.5:
+				fire50[i][j] = 0.5
+				c2_fire50 += 1
+			elif fire50[i][j] <= 0.75:
+				fire50[i][j] = 0.75
+				c3_fire50 += 1
+			elif fire50[i][j] <= 1.0:
+				fire50[i][j] = 1.0
+				c4_fire50 += 1
+			total_fire50 += 1
+			prob_fire50.append(float(c1_fire50)/total_fire50)
+			prob_fire50.append(float(c2_fire50)/total_fire50)
+			prob_fire50.append(float(c3_fire50)/total_fire50)
+			prob_fire50.append(float(c4_fire50)/total_fire50)
+
+		prob_list_fire2.append(prob_fire2)
+		prob_list_fire5.append(prob_fire5)
+		prob_list_fire10.append(prob_fire10)
+		prob_list_fire20.append(prob_fire20)
+		prob_list_fire50.append(prob_fire50)
+
+	prob_list_fire2 = np.array(prob_list_fire2)
+	prob_list_fire5 = np.array(prob_list_fire5)
+	prob_list_fire10 = np.array(prob_list_fire10)
+	prob_list_fire20 = np.array(prob_list_fire20)
+	prob_list_fire50 = np.array(prob_list_fire50)
+
+	np.savetxt(str(dir_name + "Class_Pred_Probs/pred_fire2.csv"), prob_list_fire2, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Pred_Probs/pred_fire5.csv"), prob_list_fire5, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Pred_Probs/pred_fire10.csv"), prob_list_fire10, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Pred_Probs/pred_fire20.csv"), prob_list_fire20, delimiter=",")
+	np.savetxt(str(dir_name + "Class_Pred_Probs/pred_fire50.csv"), prob_list_fire50, delimiter=",")
+
+README.md
+
+# TimeSeriesForecasting
+Time Series Forecasting using Deep Learning Methods
+Important reference: http://www.jakob-aungiers.com/articles/a/LSTM-Neural-Network-for-Time-Series-Prediction
+Multidimensional forecasting: http://www.jakob-aungiers.com/articles/a/Multidimensional-LSTM-Networks-to-Predict-Bitcoin-Price
+
+Aim is to predict the final value of each sequence as opposed to the next value at each time step or classifying the sequence. 
+
+Smoothness results.txt
+
+Smoothness results
+
+Data_20_2hyp/Class_Pred_Probs/pred_fire2.csv
+[ 0.0575964]
+Data_20_2hyp/Class_Pred_Probs/pred_fire5.csv
+[ 0.0575964]
+Data_20_2hyp/Class_Pred_Probs/pred_fire10.csv
+[ 0.0575964]
+Data_20_2hyp/Class_Pred_Probs/pred_fire20.csv
+[ 0.0575964]
+Data_20_2hyp/Class_Pred_Probs/pred_fire50.csv
+[ 0.0575964]
+Data_50_2hyp/Class_Pred_Probs/pred_fire2.csv
+[ 0.0575964]
+Data_50_2hyp/Class_Pred_Probs/pred_fire5.csv
+[ 0.0575964]
+Data_50_2hyp/Class_Pred_Probs/pred_fire10.csv
+[ 0.0575964]
+Data_50_2hyp/Class_Pred_Probs/pred_fire20.csv
+[ 0.0575964]
+Data_50_2hyp/Class_Pred_Probs/pred_fire50.csv
+[ 0.0575964]
+Data_100_2hyp/Class_Pred_Probs/pred_fire2.csv
+[ 0.0575964]
+Data_100_2hyp/Class_Pred_Probs/pred_fire5.csv
+[ 0.0575964]
+Data_100_2hyp/Class_Pred_Probs/pred_fire10.csv
+[ 0.0575964]
+Data_100_2hyp/Class_Pred_Probs/pred_fire20.csv
+[ 0.0575964]
+Data_100_2hyp/Class_Pred_Probs/pred_fire50.csv
+[ 0.0575964]
+
+Data_20_4hyp/Class_Pred_Probs/pred_fire2.csv
+[ 0.02119346]
+Data_20_4hyp/Class_Pred_Probs/pred_fire5.csv
+[ 0.02119346]
+Data_20_4hyp/Class_Pred_Probs/pred_fire10.csv
+[ 0.02119346]
+Data_20_4hyp/Class_Pred_Probs/pred_fire20.csv
+[ 0.02119346]
+Data_20_4hyp/Class_Pred_Probs/pred_fire50.csv
+[ 0.02119346]
+Data_50_4hyp/Class_Pred_Probs/pred_fire2.csv
+[ 0.02119346]
+Data_50_4hyp/Class_Pred_Probs/pred_fire5.csv
+[ 0.02119346]
+Data_50_4hyp/Class_Pred_Probs/pred_fire10.csv
+[ 0.02119346]
+Data_50_4hyp/Class_Pred_Probs/pred_fire20.csv
+[ 0.02119346]
+Data_50_4hyp/Class_Pred_Probs/pred_fire50.csv
+[ 0.02119346]
+Data_100_4hyp/Class_Pred_Probs/pred_fire2.csv
+[ 0.02119346]
+Data_100_4hyp/Class_Pred_Probs/pred_fire5.csv
+[ 0.02119346]
+Data_100_4hyp/Class_Pred_Probs/pred_fire10.csv
+[ 0.02119346]
+Data_100_4hyp/Class_Pred_Probs/pred_fire20.csv
+[ 0.02119346]
+Data_100_4hyp/Class_Pred_Probs/pred_fire50.csv
+[ 0.02119346]
+
+
+
+
